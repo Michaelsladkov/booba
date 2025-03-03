@@ -1,17 +1,17 @@
 #include "lexer.hpp"
 #include <iostream>
 
-std::optional<std::vector<Token>> Lexer::lex(std::string &data) {
+std::vector<Token> Lexer::lex(std::string &data) {
     size_t pointer = 0;
     std::vector<Token> result;
     while (pointer < data.length()) {
         auto parsed_token = parse_token(data, pointer);
         if (!parsed_token.has_value()) {
-            return std::nullopt;
+            return result;
         }
         result.push_back(parsed_token.value());
     }
-    return std::make_optional(result);
+    return result;
 }
 
 std::optional<Token> Lexer::parse_single_qs(std::string &data,
@@ -43,12 +43,17 @@ std::optional<Token> Lexer::parse_variable(std::string &data, size_t &pointer,
     }
     while (
         pointer < data.length() &&
-        (!isspace(data[pointer]) || (allow_double_q && data[pointer] != '"'))) {
-        if (!isalnum(data[pointer] && data[pointer] != '_')) {
+        ((allow_double_q && data[pointer] != '"' && !isspace(data[pointer])) ||
+         (!allow_double_q && !isspace(data[pointer])))) {
+        if (!isalnum(data[pointer]) && (data[pointer] != '_') &&
+            (data[pointer] != '$')) {
             pointer++;
             return std::nullopt;
         }
         result += data[pointer++];
+    }
+    if (result == "") {
+        return std::nullopt;
     }
     return std::make_optional(Token(Variable, std::move(result)));
 }
@@ -72,6 +77,7 @@ std::optional<Token> Lexer::parse_double_qs(std::string &data,
         if (!backslash && data[pointer] == '\\') {
             backslash = true;
             pointer++;
+            starting_position += 1;
             continue;
         }
         if (!backslash && data[pointer] == '$') {
@@ -84,6 +90,7 @@ std::optional<Token> Lexer::parse_double_qs(std::string &data,
             continue;
         }
         result += data[pointer++];
+        backslash = false;
     }
     if (!closed) {
         return std::nullopt;
@@ -113,6 +120,10 @@ std::optional<Token> Lexer::parse_word(std::string &data, size_t &pointer) {
         result += data[pointer++];
     }
 
+    if (result == "") {
+        return std::nullopt;
+    }
+
     return std::make_optional(Token(type, result));
 }
 
@@ -137,5 +148,5 @@ std::optional<Token> Lexer::parse_token(std::string &data, size_t &pointer) {
         break;
     }
 
-    return parse_word(data, pointer);
+    return parse_word(data, --pointer);
 }

@@ -17,7 +17,7 @@ class Lexer {
     static std::optional<Token> parse_word(std::string &data, size_t &pointer);
 
   public:
-    static std::optional<std::vector<Token>> lex(std::string &data);
+    static std::vector<Token> lex(std::string &data);
 
     friend class TestLexer;
 };
