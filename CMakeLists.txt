@@ -23,7 +23,7 @@ add_custom_target(clang-format
     clang-format
     -style=file
     -i
-    ${CPP_FILES} ${HPP_FILES}
+    ${SRC_CPP_FILES} ${TESTS_CPP_FILES} ${HPP_FILES}
   WORKING_DIRECTORY
     ${CMAKE_SOURCE_DIR}
   COMMENT
